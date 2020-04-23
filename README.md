@@ -1,5 +1,9 @@
 # SNMP
-Proyecto final Gestión de Redes. Lista de objetos SMI utilizados:
+Proyecto final Gestión de Redes. Enlace libreria de python: http://snmplabs.com/pysnmp/
+<p align="center">
+  <img src="https://i.imgur.com/0h2rcH2.png">
+</p>
+
 ### HOST-RESOURCES-MIB
  Variable | OID | Descripción | Uso
 | :---: | --- | --- | :---: |
