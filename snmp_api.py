@@ -1,9 +1,23 @@
 from pysnmp.hlapi import *
-
-
 #
 # Functions to allow easily use GET and SET operations from SNMP in rest of code.
 #
+
+
+def set_scalar(ip,port, oid, value):
+    errorIndication, errorStatus, errorIndex, varBinds = next(
+        setCmd(SnmpEngine(),
+               CommunityData('public'),
+               UdpTransportTarget((ip, int(port))),
+               ContextData(),
+               ObjectType(ObjectIdentity(oid),
+                          OctetString(value)))
+    )
+
+    if errorIndication or errorIndex or errorIndex:
+        print('[SNMP API] Error setting specified value:' + oid)
+    else:
+        return str(varBinds[0].__getitem__(1)) == value
 
 
 def get_scalar(ip, port, oid, return_type):
