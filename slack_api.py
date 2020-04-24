@@ -12,6 +12,11 @@ SLACK_VERIFICATION_TOKEN = ""
 # Slack client for Web API requests
 slack_client = SlackClient(SLACK_BOT_TOKEN)
 
+
+def slackconnect():
+    return slack_client.rtm_connect()
+
+
 # Flask web server for incoming traffic from Slack
 app = Flask(__name__)
 
