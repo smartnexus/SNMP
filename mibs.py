@@ -12,7 +12,8 @@ host_mib = {
     },
     'hrStorage': {
         'hrMemorySize': ObjectIdentity('1.3.6.1.2.1.25.2.2.0'),
-        # Table data using 4th column
+        # Table data using 4th column: StorageTable
+        # Hay que mirar que columnas son idex, hay que implementarlas obligatoriamente
         'hrStorageType': ObjectIdentity('1.3.6.1.2.1.25.2.3.1.2'),
         'hrStorageAllocationUnits': ObjectIdentity('1.3.6.1.2.1.25.2.3.1.4'),
         'hrStorageSize': ObjectIdentity('1.3.6.1.2.1.25.2.3.1.5'),
@@ -20,7 +21,9 @@ host_mib = {
     },
     'hrDevice': {
         # TODO: Get all rows to match all specific core cases. This is just column's OID.
-        'hrProcessorTable': ObjectIdentity('1.3.6.1.2.1.25.3.3.1.2')
+        # This oid is for processorLoad
+        'hrProcessorTable': ObjectIdentity('1.3.6.1.2.1.25.3.3.1.2'),
+        'hrProcessorFrwID': ObjectIdentity('1.3.6.1.2.1.25.3.3.1.1')
     },
     # Remaining OIDs objects are tables.
     'hrSWRun': {
