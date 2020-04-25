@@ -1,10 +1,12 @@
 from mibs import host_mib, rfc1213_mib, lanmgr_mib
 from slack_api import *
-from api import get_static_data, get_variable_data
+from api import *
 import time
 
 ip = 'localhost'
 port = 161
+
+init_slack()
 
 print('[Main] Starting analysis for', ip + ':' + str(port))
 print('[Main] Getting device information...')

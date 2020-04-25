@@ -1,5 +1,6 @@
 from mibs import host_mib, rfc1213_mib, lanmgr_mib
 from snmp_api import *
+from slack_api import *
 import statistics
 
 integer = 0
@@ -51,3 +52,7 @@ def get_variable_data(ip, port):
         'used_ram': round(used_ram/(installed_ram * 1000), 2)
     }
     return result
+
+
+def init_slack():
+    send_slack_message('#gestores')
