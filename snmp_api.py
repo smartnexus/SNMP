@@ -75,8 +75,7 @@ def get_table_item(ip, port, column_oid, index, return_type):
         # Returning only one value of those found
         return str(varBinds[0].__getitem__(1)) if return_type == 1 else int(varBinds[0].__getitem__(1))
 
-
-
+"""
     #No se como si indican los valores umbrales en el agente.
     #No se muy bien que poner el return
 def send_trap(ip, port, oid):
@@ -92,5 +91,6 @@ def send_trap(ip, port, oid):
     if errorIndication or errorIndex or errorIndex:
         print('[SNMP API] Error trap:' + oid)
     else:
-        return "Trap"
+        return .......
 
+"""
