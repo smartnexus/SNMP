@@ -5,6 +5,7 @@ import statistics
 
 integer = 0
 string = 1
+trap_list=[]
 
 
 def get_discard(ip, port):
@@ -54,5 +55,14 @@ def get_variable_data(ip, port):
     return result
 
 
-def init_slack():
-    send_slack_message('#gestores')
+def trap_check(ip):
+    check = False
+    if ip in trap_list:
+        check = True
+    return check
+
+
+
+
+
+
