@@ -69,28 +69,27 @@ def get_table_item(ip, port, column_oid, index, return_type):
                ObjectType(ObjectIdentity(column_oid + '.' + index)))
     )
 
-    if errorIndication or errorIndex or errorIndex:
+    if errorIndication or errorStatus or errorIndex:
         print('[SNMP API] Error getting specified value:' + column_oid)
     else:
         # Returning only one value of those found
         return str(varBinds[0].__getitem__(1)) if return_type == 1 else int(varBinds[0].__getitem__(1))
 
-"""
-    #No se como si indican los valores umbrales en el agente.
-    #No se muy bien que poner el return
-def send_trap(ip, port, oid):
-    errorIndication, errorStatus, errorIndex, varBinds = next(
-        sendNotification(SnmpEngine(),
-                         CommunityData('public'),
-                         UdpTransportTarget((ip, int(port))),
-                         ContextData(),
-                         'trap',
-                         NotificationType(ObjectIdentity(oid))
-                         )
-    )
-    if errorIndication or errorIndex or errorIndex:
-        print('[SNMP API] Error trap:' + oid)
-    else:
-        return .......
 
-"""
+# TODO: Darle oid(cambiar número por la string), y el valor a trapear como parámetros
+def send_trap(ip, port, oid, value):
+    errorIndication,errorStatus, errorIndex, varBinds=next(sendNotification(SnmpEngine(),
+                     CommunityData('public'),
+                     UdpTransportTarget((ip, int(port))),
+                     ContextData(),
+                     'trap',
+                     [ObjectType(ObjectIdentity(oid), Integer(value))]))
+    if errorIndication or errorIndex or errorIndex:
+        print('[SNMP API] Error sending trap for:' + oid)
+    else:
+        return True
+
+
+if __name__ == "__main__":
+    send_trap("192.168.1.111", 162, '1.3.6.1.2.1.4.3.0', 31060000)
+
