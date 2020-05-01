@@ -9,6 +9,7 @@ trap_list = []
 discard_sw = ['update.exe', 'SkypeBackgroundHost.exe', 'SkypeBridge.exe', 'SkypeApp.exe',
               'Skype.exe', 'MicrosoftEdge.exe', 'MicrosoftEdgeCP.exe', 'MicrosoftEdgesh.exe',
               'OneDrive.exe', 'firefox.exe', 'java.exe']
+ipInReceives_thr = 5000000
 
 
 def get_discard(ip, port):
@@ -66,3 +67,12 @@ def trap_check(ip):
     if ip in trap_list:
         check = True
     return check
+
+
+def trap_config(ip, port):
+    control = send_trap(ip, port, rfc1213_mib.get('ip').get('ipInReceives'), ipInReceives_thr)
+    # TODO: llamar a send_trap() para resto las variables de las que quiera recibir traps
+    return control
+
+
+
