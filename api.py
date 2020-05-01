@@ -1,18 +1,29 @@
 from mibs import host_mib, rfc1213_mib, lanmgr_mib
 from snmp_api import *
+from main import port, port_trap, discard_sw
 from slack_api import *
+import uuid
 import statistics
 
 integer = 0
 string = 1
 trap_list = []
-discard_sw = ['update.exe', 'SkypeBackgroundHost.exe', 'SkypeBridge.exe', 'SkypeApp.exe',
-              'Skype.exe', 'MicrosoftEdge.exe', 'MicrosoftEdgeCP.exe', 'MicrosoftEdgesh.exe',
-              'OneDrive.exe', 'firefox.exe', 'java.exe']
-ipInReceives_thr = 5000000
+users = []
 
 
-def get_discard(ip, port):
+def add_agent(ip, slack_user):
+    if not any(user['slack'] == slack_user for user in users):  # Prevents duplicated slack users in list
+        user = {
+            "id": uuid.uuid4().hex,
+            "ip": ip,
+            "slack": slack_user
+        }
+        set_scalar(ip, port, rfc1213_mib.get('system').get('sysName'), user['id'])
+        set_scalar(ip, port, rfc1213_mib.get('system').get('sysContact'), user['slack'])
+        users.append(user)
+
+
+def get_discard(ip):
     OS_index = get_scalar(ip, port, host_mib.get('hrSWRun').get('hrSWOSIndex'), string)
     os_cpu_perf = get_table_item(ip, port, host_mib.get('hrSWRunPerf').get('hrSWRunPerfTable'), OS_index, integer)
     installed_sw = get_table_items(ip, port, host_mib.get('hrSWInstalled').get('hrSWInstalledName'), string)
@@ -21,7 +32,7 @@ def get_discard(ip, port):
     return os_cpu_perf, installed_sw.__contains__('MATLAB'), any(elem in run_sw for elem in discard_sw)
 
 
-def get_data(ip, port):
+def get_data(ip):
     cpu_cores = get_table_items(ip, port, host_mib.get('hrDevice').get('hrProcessorLoad'), integer)
     storage_type = get_table_items(ip, port, host_mib.get('hrStorage').get('hrStorageType'), string)
     installed_ram = get_scalar(ip, port, host_mib.get('hrStorage').get('hrMemorySize'), int)
@@ -37,8 +48,8 @@ def get_data(ip, port):
     return cpu_cores, installed_ram, used_ram
 
 
-def get_static_data(ip, port):
-    cpu_cores, installed_ram, used_ram = get_data(ip, port)
+def get_static_data(ip):
+    cpu_cores, installed_ram, used_ram = get_data(ip)
     descr = get_scalar(ip, port, rfc1213_mib.get('system').get('sysDescr'),
                        string).replace('Hardware: ', '').replace('Software: ', '').split(' - ')
     result = {
@@ -52,10 +63,9 @@ def get_static_data(ip, port):
     return result
 
 
-def get_variable_data(ip, port):
-    cpu_cores, installed_ram, used_ram = get_data(ip, port)
+def get_variable_data(ip):
+    cpu_cores, installed_ram, used_ram = get_data(ip)
     result = {
-        # 'date': get_scalar(ip, port, host_mib.get('hrSystem').get('hrSystemDate'), string) TODO: decode received str
         'used_cpu': statistics.mean(cpu_cores) / 100,
         'used_ram': round(used_ram / (installed_ram * 1000), 2)
     }
@@ -70,15 +80,11 @@ def trap_check(ip):
 
 
 def trap_server_init():
-    # Iniciamos la escucha en el background del servidor de traps.
-    trap_server = threading.Thread(target=trap_engine)
+    trap_server = threading.Thread(target=trap_engine)  # Iniciamos la escucha en el background del servidor de traps.
     trap_server.start()
 
 
-def trap_config(ip, port):
-    control = send_trap(ip, port, rfc1213_mib.get('ip').get('ipInReceives'), ipInReceives_thr)
+def trap_config(ip):
+    control = send_trap(ip, port_trap, rfc1213_mib.get('ip').get('ipInReceives'), ipInReceives_thr)
     # TODO: llamar a send_trap() para resto las variables de las que quiera recibir traps
     return control
-
-
-

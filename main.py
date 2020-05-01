@@ -10,31 +10,32 @@ test_time = 60  # duracion de la prueba
 sample_time = 5
 count = 0  # variable que controlará el tiempo de duracion de la prueba
 discard = False
-# Umbrales
+
+# UMBRALES
 cpu_thr = 2
 ram_thr = 4
 uptime_thr = 43200000
+ipInReceives_thr = 5000000
+discard_sw = ['update.exe', 'SkypeBackgroundHost.exe', 'SkypeBridge.exe', 'SkypeApp.exe',
+              'Skype.exe', 'MicrosoftEdge.exe', 'MicrosoftEdgeCP.exe', 'MicrosoftEdgesh.exe',
+              'OneDrive.exe', 'firefox.exe', 'java.exe']
 
 
 # TODO: (1)Iniciar el slack y que me devuelva la lista de ips (list_ip) de todos los usuarios que realizan la prueba. (¿y la lisa de slack_users?)
 
 #init_slack()
-list_ip = ['localhost']
 
-# TODO: generar un identificador único para cada usuario y haciendo uso de la función addAgent(user, uuid, ip)
-# addAgent(user, uuid, ip)
-
-for ip in list_ip:
+for ip in users:  # la lista users ya contendrá todos las ips e informacion de usuario para la prueba
     count = 0
     discard = False
-    n_user = list_ip.index(ip)
-    trap_config(ip, port_trap)       #Configuro traps
+    n_user = users.index(ip)  # TODO: Reformat necesario ya que users no es una lista de objetos simples.
+    trap_config(ip)       #Configuro traps
 
     print('[Main] Starting analysis for', ip + ':' + str(port))
 
     print('[Main] Getting device information...')
-    static_data = get_static_data(ip, port)
-    print(get_static_data(ip, port))
+    static_data = get_static_data(ip)
+    print(get_static_data(ip))
     # TODO: Comprobar si los datos pueden suponer el descarte de la prueba
     if static_data['cpu_cores'] < cpu_thr:
         discard = True
@@ -67,8 +68,8 @@ for ip in list_ip:
 
     print('[Main] Gathering device use each 5 secs...')
     while count < test_time:
-        variable_data = get_variable_data(ip, port)
-        print(get_variable_data(ip, port))
+        variable_data = get_variable_data(ip)
+        print(get_variable_data(ip))
         # TODO: compobar si este usuario deberia ser descartado para la prueba
         if trap_check(ip):
             discard = True
