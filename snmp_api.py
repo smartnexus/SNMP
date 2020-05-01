@@ -2,14 +2,11 @@ from pysnmp.hlapi import *
 from pysnmp.entity import engine, config
 from pysnmp.carrier.asyncore.dgram import udp
 from pysnmp.entity.rfc3413 import ntfrcv
-import asyncio
+import threading
 
-trap_list = ['']
-
-
-#
-# Functions to allow easily use GET and SET operations from SNMP in rest of code.
-#
+listening_ip = '127.0.0.1'
+listening_port = 162
+trap_list = []
 
 
 def set_scalar(ip, port, oid, value):
@@ -83,13 +80,13 @@ def get_table_item(ip, port, column_oid, index, return_type):
 
 
 def send_trap(ip, port, oid, value):
-    errorIndication, errorStatus, errorIndex, varBinds = next(sendNotification(SnmpEngine(),
-                                                                               CommunityData('public'),
-                                                                               UdpTransportTarget((ip, int(port))),
-                                                                               ContextData(),
-                                                                               'trap',
-                                                                               [ObjectType(ObjectIdentity(oid),
-                                                                                           Integer(value))]))
+    errorIndication, errorStatus, errorIndex, varBinds = next(
+        sendNotification(SnmpEngine(),
+                         CommunityData('public'),
+                         UdpTransportTarget((ip, int(port))),
+                         ContextData(),
+                         'trap',
+                         [ObjectType(ObjectIdentity(oid), Integer(value))]))
     if errorIndication or errorIndex or errorIndex:
         print('[SNMP API] Error sending trap for:' + oid)
     else:
@@ -97,28 +94,29 @@ def send_trap(ip, port, oid, value):
 
 
 # function for receiving trap notifications
-# TODO probarlo
-def callback_trap(snmpEngine, stateReference, contextEngineId, contextName, varBinds, cbCtx):
-    sender_domain, sender_address = snmpEngine.msgAndPduDsp.getTransportInfo(stateReference)
-    # print de comprobacion
-    print('Notification from ' + sender_address)
-    cbCtx.append(sender_address)
 
-
-def trap_engine(ip, port):
-    loop = asyncio.get_event_loop()
+def trap_engine():
     snmpEngine = engine.SnmpEngine()
-    print('TrapServer listening on' + ip + ":" + port)
+    print('[SNMP API] Trap Server listening on ' + listening_ip + ":" + str(listening_port))
     config.addTransport(
         snmpEngine,
         udp.domainName + (1,),
-        udp.UdpTransport().openServerMode((ip, port))
+        udp.UdpTransport().openServerMode((listening_ip, listening_port))
     )
     config.addV1System(snmpEngine, 'my-area', 'public')
-    global_list = ntfrcv.NotificationReceiver(snmpEngine, callback_trap, cbCtx=trap_list)
-    return global_list
-    loop.run_forever()
 
+    def callback(eng, ref, eng_id, name, var_binds, cb_ctx):
+        sender_domain, sender_address = eng.msgAndPduDsp.getTransportInfo(ref)
+        print('[SNMP API] Notification from: ' + str(sender_address))
+        if not trap_list.__contains__(sender_address[0]):
+            trap_list.append(sender_address[0])
+            print(trap_list)
 
-if __name__ == "__main__":
-    send_trap("192.168.1.111", 162, '1.3.6.1.2.1.4.3.0', 31060000)
+    ntfrcv.NotificationReceiver(snmpEngine, callback)
+    snmpEngine.transportDispatcher.jobStarted(1)
+
+    try:
+        snmpEngine.transportDispatcher.runDispatcher()
+    finally:
+        snmpEngine.transportDispatcher.closeDispatcher()
+        raise

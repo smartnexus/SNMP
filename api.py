@@ -69,6 +69,12 @@ def trap_check(ip):
     return check
 
 
+def trap_server_init():
+    # Iniciamos la escucha en el background del servidor de traps.
+    trap_server = threading.Thread(target=trap_engine)
+    trap_server.start()
+
+
 def trap_config(ip, port):
     control = send_trap(ip, port, rfc1213_mib.get('ip').get('ipInReceives'), ipInReceives_thr)
     # TODO: llamar a send_trap() para resto las variables de las que quiera recibir traps
