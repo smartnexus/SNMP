@@ -5,6 +5,7 @@ import time
 import json
 
 port = 161
+port_trap = 162
 test_time = 60  # duracion de la prueba
 sample_time = 5
 count = 0  # variable que controlará el tiempo de duracion de la prueba
@@ -20,12 +21,6 @@ uptime_thr = 43200000
 #init_slack()
 list_ip = ['localhost']
 
-"""
-print('[Main] Starting analysis for', ip + ':' + str(port))
-print('[Main] Getting device information...')
-print(get_static_data(ip, port))
-print('[Main] Gathering device use each 5 secs...')
-"""
 # TODO: generar un identificador único para cada usuario y haciendo uso de la función addAgent(user, uuid, ip)
 # addAgent(user, uuid, ip)
 
@@ -33,11 +28,11 @@ for ip in list_ip:
     count = 0
     discard = False
     n_user = list_ip.index(ip)
-    trap_config(ip, port)       #Configuro traps
-    print('[Main] Starting analysis for', ip + ':' + str(port))
-    print('[Main] Getting device information...')
+    trap_config(ip, port_trap)       #Configuro traps
 
-    # Obtención de datos esáticos
+    print('[Main] Starting analysis for', ip + ':' + str(port))
+
+    print('[Main] Getting device information...')
     static_data = get_static_data(ip, port)
     print(get_static_data(ip, port))
     # TODO: Comprobar si los datos pueden suponer el descarte de la prueba
@@ -86,5 +81,11 @@ for ip in list_ip:
         # list[n_user].['used_ram'].append(variable_data['used_ram'])
         count += sample_time
         time.sleep(sample_time)
+
+# TODO: Comprobar si la prueba ha sido valida
+if not discard:
+    print('Prueba realizada correctamente')
+else:
+    print('Alguna variable no cumple los umbrales, descartamos prueba')
 
 # TODO: Enviar todos los datos recogidos (agol json) a slack con la función xxxAngelitorb99xxx.
