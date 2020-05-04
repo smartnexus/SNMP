@@ -147,9 +147,83 @@ def message_actions():
             user = form_json['user']['username']
             print('[Slack API] ' + user + ' has subscribed to the test.')
             ts = form_json['container']['message_ts']
+            tg = form_json['trigger_id']
             send_state_subscribed(ts)
             # TODO: Ask for the ip. Ideas: Open modal, send private message, etc...
+            open_modal_for(tg)
     return make_response("", 200)
+
+
+def open_modal_for(trigger_id):
+    return client.chat_postMessage(
+        channel=channel_usuarios,
+        as_user=True,
+        tg=trigger_id,
+        blocks=[
+            [
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "input",
+                    "element": {
+                        "type": "plain_text_input"
+                    },
+                    "label": {
+                        "type": "plain_text",
+                        "text": "Introduzca aquí su dirección IP:",
+                        "emoji": True
+                    }
+                },
+                {
+                    "type": "context",
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": "Last updated: May 4, 2020"
+                        }
+                    ]
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Para encontrar la dirección IP de su ordenador:",
+                        "emoji": True
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "1.Abra la consola de Windows(aplicación cmd).",
+                        "emoji": True
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "2. Escriba el comando ipconfig y busque Adaptador de LAN inalámbirco.",
+                        "emoji": True
+                    }
+                },
+                {
+                    "type": "image",
+                    "title": {
+                        "type": "plain_text",
+                        "text": "Resultado del comando ipconfig",
+                        "emoji": True
+                    },
+                    "image_url": "https://www.groovypost.com/wp-content/uploads/2015/10/ipconfig.png",
+                    "alt_text": "Resultado del comando ipconfig "
+                }
+            ]
+        ]
+    )
 
 
 if __name__ == "__main__":
