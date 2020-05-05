@@ -135,7 +135,11 @@ def send_state_subscribed(ts):
 def message_actions():
     form_json = json.loads(request.form["payload"])
 
-    if form_json["token"] == verification_token:
+    if form_json["type"] == "view_submission":
+        value = form_json["view"]["state"]["values"]
+        print("ip recibida: "+str(value))
+        return make_response("", 200)
+    elif form_json["token"] == verification_token:
         value = form_json["actions"][0]["value"]
         if value == "start_test":  # An admin has started the test.
             admin = form_json['user']['username']
@@ -155,12 +159,29 @@ def message_actions():
 
 
 def open_modal_for(trigger_id):
-    return client.chat_postMessage(
+    return client.views_open(
         channel=channel_usuarios,
-        as_user=True,
-        tg=trigger_id,
-        blocks=[
-            [
+        trigger_id=trigger_id,
+        view=
+        {
+            "type": "modal",
+            "callback_id": "modal_identifier",
+            "title": {
+                "type": "plain_text",
+                "text": "Antes de comenzar",
+                "emoji": True
+            },
+            "submit": {
+                "type": "plain_text",
+                "text": "Submit",
+                "emoji": True
+            },
+            "close": {
+                "type": "plain_text",
+                "text": "Cancel",
+                "emoji": True
+            },
+            "blocks": [
                 {
                     "type": "divider"
                 },
@@ -191,38 +212,29 @@ def open_modal_for(trigger_id):
                     "type": "section",
                     "text": {
                         "type": "plain_text",
-                        "text": "Para encontrar la dirección IP de su ordenador:",
+                        "text": "1.Abra la consola de Window(aplciación cmd)",
                         "emoji": True
                     }
                 },
                 {
                     "type": "section",
                     "text": {
-                        "type": "plain_text",
-                        "text": "1.Abra la consola de Windows(aplicación cmd).",
-                        "emoji": True
-                    }
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "2. Escriba el comando ipconfig y busque Adaptador de LAN inalámbirco.",
-                        "emoji": True
+                        "type": "mrkdwn",
+                        "text": "2. Introduzca el comando ipconfig y busque la parte del texto donde pone Adaptador de Lan."
                     }
                 },
                 {
                     "type": "image",
                     "title": {
                         "type": "plain_text",
-                        "text": "Resultado del comando ipconfig",
+                        "text": "Ejemplo de ejecución del comando ipconfig",
                         "emoji": True
                     },
                     "image_url": "https://www.groovypost.com/wp-content/uploads/2015/10/ipconfig.png",
-                    "alt_text": "Resultado del comando ipconfig "
+                    "alt_text": "image1"
                 }
             ]
-        ]
+        }
     )
 
 
