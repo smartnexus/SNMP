@@ -14,20 +14,21 @@ const remote = JSON.parse(fs.readFileSync('ips.json'));
 
 app.post('/slack/actions', function (req, res) {
 	console.log('[ROUTING APP]: Received http POST from slack, routing to endpoints...');
-	var info = req.body.payload;
-	for (var i = 0; i < remote.length; i++) {
-		var ip = remote[i];
-		request.post('http://' + ip + ':5000/slack/actions', {
-		  form: {
-		    payload: info
-		  }
-		}, function (err, httpResponse, body) {
-			if(!err) {
-				console.log('[' + ip + ']: Received httpStatus code ' + httpResponse.statusCode);
-			}
-		})	
-	}
-	res.sendStatus(200);
+        var info = req.body.payload;
+        for (var i = 0; i < remote.length; i++) {
+                var ip = remote[i];
+                console.log('[' + ip + ']: Sending http POST...')
+                request.post('http://' + ip + ':5000/slack/actions', {
+                  form: {
+                    payload: info
+                  }
+                }, function (err, httpResponse, body) {
+                        if(httpResponse) {
+                                console.log('[' + httpResponse.connection.remoteAddress + ']: Received httpStatusCode ' + httpResponse.statusCode)
+                        }
+                })
+        }
+	res.end();
 });
 
 app.listen(addressDetails.port, addressDetails.ip, function () {

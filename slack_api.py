@@ -1,5 +1,6 @@
 from slack import WebClient
 from flask import Flask, request, make_response, Response
+import api
 import json
 
 app = Flask(__name__)
@@ -104,22 +105,71 @@ def send_invite_users():
     )
 
 
-def send_state_subscribed(ts):
-    return client.chat_update(
+def open_modal_for(trigger_id):
+    return client.views_open(
         channel=channel_usuarios,
-        as_user=True,
-        ts=ts,
-        blocks=[
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": ":warning:*AVISO* Un gestor ha comenzado recientemente una prueba. Recuerda que para poder participar tendras que *iniciar previamente* el software y obtener tu *dirección ip*. ¡Haz click en el botón para participar!"
+        trigger_id=trigger_id,
+        view=
+        {
+            "type": "modal",
+            "callback_id": "modal_identifier",
+            "title": {
+                "type": "plain_text",
+                "text": "Antes de comenzar"
+            },
+            "submit": {
+                "type": "plain_text",
+                "text": "Submit"
+            },
+            "close": {
+                "type": "plain_text",
+                "text": "Cancel"
+            },
+            "blocks": [
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "input",
+                    "block_id": "address",
+                    "element": {
+                        "type": "plain_text_input",
+                        "action_id": "ip"
+                    },
+                    "label": {
+                        "type": "plain_text",
+                        "text": "Introduzca aquí su dirección IP:"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "1.Abra la consola de Window(aplciación cmd)"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "2. Introduzca el comando ipconfig y busque la parte del texto donde pone Adaptador de Lan."
+                    }
+                },
+                {
+                    "type": "image",
+                    "image_url": "https://www.groovypost.com/wp-content/uploads/2015/10/ipconfig.png",
+                    "alt_text": "image1"
                 }
-            },
-            {
-                "type": "divider"
-            },
+            ]
+        }
+    )
+
+
+def send_state_subscribed(user):
+    return client.chat_postMessage(
+        channel=user,
+        as_user=True,
+        blocks=[
             {
                 "type": "section",
                 "text": {
@@ -136,9 +186,11 @@ def message_actions():
     form_json = json.loads(request.form["payload"])
 
     if form_json["type"] == "view_submission":
-        value = form_json["view"]["state"]["values"]
-        print("ip recibida: "+str(value))
-        return make_response("", 200)
+        ip = form_json["view"]["state"]["values"]['address']['ip']['value']
+        user_id = form_json['user']['id']
+        user = form_json['user']['username']
+        api.add_agent(ip, user)
+        send_state_subscribed(user_id)
     elif form_json["token"] == verification_token:
         value = form_json["actions"][0]["value"]
         if value == "start_test":  # An admin has started the test.
@@ -150,92 +202,11 @@ def message_actions():
         elif value == "subscribe_test":
             user = form_json['user']['username']
             print('[Slack API] ' + user + ' has subscribed to the test.')
-            ts = form_json['container']['message_ts']
             tg = form_json['trigger_id']
-            send_state_subscribed(ts)
             # TODO: Ask for the ip. Ideas: Open modal, send private message, etc...
             open_modal_for(tg)
+
     return make_response("", 200)
-
-
-def open_modal_for(trigger_id):
-    return client.views_open(
-        channel=channel_usuarios,
-        trigger_id=trigger_id,
-        view=
-        {
-            "type": "modal",
-            "callback_id": "modal_identifier",
-            "title": {
-                "type": "plain_text",
-                "text": "Antes de comenzar",
-                "emoji": True
-            },
-            "submit": {
-                "type": "plain_text",
-                "text": "Submit",
-                "emoji": True
-            },
-            "close": {
-                "type": "plain_text",
-                "text": "Cancel",
-                "emoji": True
-            },
-            "blocks": [
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "input",
-                    "element": {
-                        "type": "plain_text_input"
-                    },
-                    "label": {
-                        "type": "plain_text",
-                        "text": "Introduzca aquí su dirección IP:",
-                        "emoji": True
-                    }
-                },
-                {
-                    "type": "context",
-                    "elements": [
-                        {
-                            "type": "mrkdwn",
-                            "text": "Last updated: May 4, 2020"
-                        }
-                    ]
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "1.Abra la consola de Window(aplciación cmd)",
-                        "emoji": True
-                    }
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "2. Introduzca el comando ipconfig y busque la parte del texto donde pone Adaptador de Lan."
-                    }
-                },
-                {
-                    "type": "image",
-                    "title": {
-                        "type": "plain_text",
-                        "text": "Ejemplo de ejecución del comando ipconfig",
-                        "emoji": True
-                    },
-                    "image_url": "https://www.groovypost.com/wp-content/uploads/2015/10/ipconfig.png",
-                    "alt_text": "image1"
-                }
-            ]
-        }
-    )
 
 
 if __name__ == "__main__":
