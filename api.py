@@ -1,13 +1,13 @@
 from mibs import host_mib, rfc1213_mib, lanmgr_mib
 from snmp_api import *
-from slack_api import *
+import slack_api
 import uuid
 import statistics
 
 integer = 0
 string = 1
+running = False
 
-trap_list = []
 users = []
 
 port = 161
@@ -21,7 +21,7 @@ discard_sw = ['update.exe', 'SkypeBackgroundHost.exe', 'SkypeBridge.exe', 'Skype
 
 
 def add_agent(ip, slack_user):
-    if not any(user['slack'] == slack_user for user in users):  # Prevents duplicated slack users in list
+    if not any(user['slack'] == slack_user for user in users) and not running:  # Prevents duplicated slack users in list
         user = {
             "id": uuid.uuid4().hex,
             "ip": ip,
@@ -31,6 +31,7 @@ def add_agent(ip, slack_user):
         set_scalar(ip, port, rfc1213_mib.get('system').get('sysName'), user['id'])
         set_scalar(ip, port, rfc1213_mib.get('system').get('sysContact'), user['slack'])
         users.append(user)
+    return not running
 
 
 def get_discard(ip):
@@ -88,6 +89,11 @@ def trap_check(ip):
     if ip in trap_list:
         check = True
     return check
+
+
+def slack_server_init():
+    slack_server = threading.Thread(target=slack_api.slack_engine)
+    slack_server.start()
 
 
 def trap_server_init():

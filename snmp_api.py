@@ -107,10 +107,8 @@ def trap_engine():
 
     def callback(eng, ref, eng_id, name, var_binds, cb_ctx):
         sender_domain, sender_address = eng.msgAndPduDsp.getTransportInfo(ref)
-        print('[SNMP API] Notification from: ' + str(sender_address))
         if not trap_list.__contains__(sender_address[0]):
             trap_list.append(sender_address[0])
-            print(trap_list)
 
     ntfrcv.NotificationReceiver(snmpEngine, callback)
     snmpEngine.transportDispatcher.jobStarted(1)

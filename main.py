@@ -2,7 +2,6 @@ from mibs import host_mib, rfc1213_mib, lanmgr_mib
 from slack_api import *
 from api import *
 import time
-import json
 
 port = 161
 port_trap = 162
@@ -24,8 +23,11 @@ discard_sw = ['update.exe', 'SkypeBackgroundHost.exe', 'SkypeBridge.exe', 'Skype
 # TODO: (1)Iniciar el slack y que me devuelva la lista de ips (list_ip) de todos los usuarios que realizan la prueba. (¿y la lisa de slack_users?)
 
 trap_server_init()
-add_agent('127.0.0.1', 'angel')
-add_agent('127.0.0.1', 'cecilia')
+slack_server_init()
+while len(users) < 1:
+    time.sleep(5)
+api.running = True
+trap_server_init()
 
 for user in users:
     ip = user['ip']
@@ -77,6 +79,10 @@ for user in users:
     user['uptime'] = static_data['uptime']
     user['cpu_cores'] = static_data['cpu_cores']
     user['installed_ram'] = static_data['installed_ram']
+    user['data'] = {
+        'used_cpu': [],
+        'used_ram': []
+    }
 
     if discard:
         print('[Main] Discarding test for user:', user['slack'])
@@ -88,16 +94,14 @@ while count < test_time:
         ip = user['ip']
         domain = user['slack'] + '@' + user['ip']
         variable_data = get_variable_data(ip)
-        print(get_variable_data(ip))
-        # TODO: compobar si este usuario deberia ser descartado para la prueba
         if trap_check(ip):
             discard = True
-            # TODO: Añadir a arbol json, rama discard, trap
-            print('[DISCARD] Trap received')
+            print('[DISCARD] Trap received from ' + domain)
+            user["discard"].append({"trap_received": True})
 
-
-        # TODO: añadir los datos estaticos al arbol json (en lo comentado he puesto arbol inventado de ejemplo
-        # user['used_cpu'].append(variable_data['used_cpu'])
-        # user['used_ram'].append(variable_data['used_ram'])
+        user["data"]["used_cpu"].append(variable_data["used_cpu"])
+        user["data"]["used_ram"].append(variable_data["used_ram"])
     count += sample_time
     time.sleep(sample_time)
+
+print(users)

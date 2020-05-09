@@ -1,5 +1,5 @@
 from slack import WebClient
-from flask import Flask, request, make_response, Response
+from flask import Flask, request, make_response
 import api
 import json
 
@@ -165,7 +165,8 @@ def open_modal_for(trigger_id):
     )
 
 
-def send_state_subscribed(user):
+def send_state_subscribed(user, result):
+    string = ":heavy_check_mark: Tu subscripción se ha registrado correctamente." if result else ":disappointed_relieved: Lo sentimos, la prueba ya está en curso."
     return client.chat_postMessage(
         channel=user,
         as_user=True,
@@ -174,7 +175,7 @@ def send_state_subscribed(user):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": ":heavy_check_mark: Tu subscripción se ha registrado correctamente."
+                    "text": string
                 }
             }
         ]
@@ -189,8 +190,10 @@ def message_actions():
         ip = form_json["view"]["state"]["values"]['address']['ip']['value']
         user_id = form_json['user']['id']
         user = form_json['user']['username']
-        api.add_agent(ip, user)
-        send_state_subscribed(user_id)
+        result = api.add_agent(ip, user)
+        send_state_subscribed(user_id, result)
+        if result:
+            print('[Slack API] ' + user + ' has subscribed to the test.')
     elif form_json["token"] == verification_token:
         value = form_json["actions"][0]["value"]
         if value == "start_test":  # An admin has started the test.
@@ -200,15 +203,12 @@ def message_actions():
             send_state_waiting(ts)
             send_invite_users()
         elif value == "subscribe_test":
-            user = form_json['user']['username']
-            print('[Slack API] ' + user + ' has subscribed to the test.')
             tg = form_json['trigger_id']
-            # TODO: Ask for the ip. Ideas: Open modal, send private message, etc...
             open_modal_for(tg)
 
     return make_response("", 200)
 
 
-if __name__ == "__main__":
+def slack_engine():
     send_init()
     app.run(host='0.0.0.0')
