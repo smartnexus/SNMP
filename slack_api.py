@@ -2,19 +2,21 @@ from slack import WebClient
 from flask import Flask, request, make_response
 import api
 import json
+import logging
 
+values = {}
+client = WebClient()
 app = Flask(__name__)
 
-slack_token = "xoxb-1096471659041-1086356946467-hgDY5l937lAbsnZPmO8C8hm7"
-verification_token = "OWsReC2914G1XxtLbhSNYjly"
-channel_gestores = 'C012PN83MQC'
-channel_usuarios = 'C012AR4E5T8'
-client = WebClient(token=slack_token)
+
+def load_values(config):
+    global values
+    values = config
 
 
 def send_init():  # Sends message to admins inviting them to start the test.
     return client.chat_postMessage(
-        channel=channel_gestores,
+        channel=values['channel_gestores'],
         as_user=True,
         blocks=[
             {
@@ -47,7 +49,7 @@ def send_init():  # Sends message to admins inviting them to start the test.
 
 def send_state_waiting(ts):  # Updates message to admins telling them to app is waiting users.
     return client.chat_update(
-        channel=channel_gestores,
+        channel=values['channel_gestores'],
         as_user=True,
         ts=ts,
         blocks=[
@@ -74,7 +76,7 @@ def send_state_waiting(ts):  # Updates message to admins telling them to app is 
 
 def send_invite_users():
     return client.chat_postMessage(
-        channel=channel_usuarios,
+        channel=values['channel_usuarios'],
         as_user=True,
         blocks=[
             {
@@ -107,7 +109,7 @@ def send_invite_users():
 
 def open_modal_for(trigger_id):
     return client.views_open(
-        channel=channel_usuarios,
+        channel=values['channel_usuarios'],
         trigger_id=trigger_id,
         view=
         {
@@ -185,7 +187,6 @@ def send_state_subscribed(user, result):
 @app.route("/slack/actions", methods=["POST"])
 def message_actions():
     form_json = json.loads(request.form["payload"])
-
     if form_json["type"] == "view_submission":
         ip = form_json["view"]["state"]["values"]['address']['ip']['value']
         user_id = form_json['user']['id']
@@ -194,7 +195,7 @@ def message_actions():
         send_state_subscribed(user_id, result)
         if result:
             print('[Slack API] ' + user + ' has subscribed to the test.')
-    elif form_json["token"] == verification_token:
+    elif form_json["token"] == values['verification_token']:
         value = form_json["actions"][0]["value"]
         if value == "start_test":  # An admin has started the test.
             admin = form_json['user']['username']
@@ -210,5 +211,11 @@ def message_actions():
 
 
 def slack_engine():
+    global client
+    client = WebClient(token=values['slack_token'])
     send_init()
+    print('[Slack API] Http Server listening on 0.0.0.0:5000')
+    app.logger.disabled = True
+    log = logging.getLogger('werkzeug')
+    log.disabled = True
     app.run(host='0.0.0.0')

@@ -1,0 +1,6 @@
+{
+  "port": 161,
+  "port_trap": 162,
+  "test_time": 20,
+  "sample_time": 5
+}
