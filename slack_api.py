@@ -3,7 +3,9 @@ from flask import Flask, request, make_response
 import api
 import json
 import logging
+import datetime
 
+uid = ''
 values = {}
 client = WebClient()
 app = Flask(__name__)
@@ -64,11 +66,13 @@ def send_state_waiting(ts):  # Updates message to admins telling them to app is 
                 "type": "divider"
             },
             {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": ":warning:*AVISO*:  La prueba se esta desarrollando."
-                }
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": ":warning:*AVISO*:  La prueba se esta desarrollando."
+                    }
+                ]
             }
         ]
     )
@@ -167,21 +171,44 @@ def open_modal_for(trigger_id):
     )
 
 
-def send_state_subscribed(user, result):
-    string = ":heavy_check_mark: Tu subscripción se ha registrado correctamente." if result else ":disappointed_relieved: Lo sentimos, la prueba ya está en curso."
-    return client.chat_postMessage(
-        channel=user,
-        as_user=True,
-        blocks=[
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": string
+def send_state_subscribed(user, result, ip):
+    if result:
+        return client.chat_postMessage(
+            channel=user,
+            as_user=True,
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Dirección ip recibida:* " + ip + "\n*Identificador de la prueba:* " + uid
+                    }
+                },
+                {
+                    "type": "context",
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": ":heavy_check_mark: Tu subscripción se ha registrado correctamente."
+                        }
+                    ]
                 }
-            }
-        ]
-    )
+            ]
+        )
+    else:
+        return client.chat_postMessage(
+            channel=user,
+            as_user=True,
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": ":disappointed_relieved: Lo sentimos, la prueba ya está en curso."
+                    }
+                }
+            ]
+        )
 
 
 @app.route("/slack/actions", methods=["POST"])
@@ -192,7 +219,7 @@ def message_actions():
         user_id = form_json['user']['id']
         user = form_json['user']['username']
         result = api.add_agent(ip, user)
-        send_state_subscribed(user_id, result)
+        send_state_subscribed(user_id, result, ip)
         if result:
             print('[Slack API] ' + user + ' has subscribed to the test.')
     elif form_json["token"] == values['verification_token']:
@@ -201,6 +228,9 @@ def message_actions():
             admin = form_json['user']['username']
             print('[Slack API] ' + admin + ' has started the test.')
             ts = form_json['container']['message_ts']
+            global uid
+            uid = datetime.datetime.now().strftime('%Y%m%d%H%M')
+            api.start_test(uid)
             send_state_waiting(ts)
             send_invite_users()
         elif value == "subscribe_test":

@@ -9,9 +9,22 @@ integer = 0
 string = 1
 running = False
 
+_id = ''
 thr = {}
 test = {}
 users = []
+
+
+def start_test(number):
+    global _id
+    _id = number
+
+
+def export(data, file):
+    print('[Main] Exporting json file with results...')
+    with open('exports/' + _id + '-' + file, 'w') as outfile:
+        json.dump(data, outfile)
+        print('[Main] Exported "exports/' + _id + '-' + file + '"!')
 
 
 def load_config():
@@ -107,7 +120,7 @@ def slack_server_init():
 
 
 def trap_server_init():
-    trap_server = threading.Thread(target=trap_engine)  # Iniciamos la escucha en el background del servidor de traps.
+    trap_server = threading.Thread(target=trap_engine)
     trap_server.start()
 
 
