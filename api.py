@@ -9,22 +9,28 @@ integer = 0
 string = 1
 running = False
 
-_id = ''
+test_id = ''
 thr = {}
 test = {}
 users = []
 
 
 def start_test(number):
-    global _id
-    _id = number
+    global test_id
+    test_id = number
 
 
 def export(data, file):
     print('[Main] Exporting json file with results...')
-    with open('exports/' + _id + '-' + file, 'w') as outfile:
+    with open('exports/' + test_id + '-' + file, 'w') as outfile:
         json.dump(data, outfile)
-        print('[Main] Exported "exports/' + _id + '-' + file + '"!')
+        print('[Main] Exported "exports/' + test_id + '-' + file + '"!')
+
+
+def to_slack():
+    file = "exports/" + test_id + "-results.json"
+    # send_state_final(ts_admin) Not working because we dont have correct ts.
+    send_file(file)
 
 
 def load_config():

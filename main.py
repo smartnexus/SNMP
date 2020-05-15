@@ -7,8 +7,7 @@ api.slack_server_init()
 while len(api.users) < test['min_users']:
     time.sleep(5)
 api.running = True
-uid = api.uid
-print('[Main] Starting the test... (UID: ' + uid + ')')
+print('[Main] Starting the test... (UID: ' + api.test_id + ')')
 for user in api.users:
     ip = user['ip']
     domain = user['slack'] + '@' + user['ip']
@@ -89,4 +88,4 @@ while count < test['test_time']:
     time.sleep(test['sample_time'])
 
 api.export(api.users, 'results.json')
-#TODO: Llamar funcion de slack para subir el archivo al canal de gestores
+api.to_slack()

@@ -7,6 +7,7 @@ import datetime
 
 uid = ''
 values = {}
+ts_admin = ''
 client = WebClient()
 app = Flask(__name__)
 
@@ -211,6 +212,47 @@ def send_state_subscribed(user, result, ip):
         )
 
 
+def send_state_final(ts):
+    return client.chat_update(
+        channel=values['channel_gestores'],
+        as_user=True,
+        ts=ts,
+        blocks=[
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Bienvenido al sistema de comprobación de rendimiento para diferentes aplicaciones de software mediante consultas vía SNMP.\n \n Se le recuerda que es necesario *disponer de un agente SNMP* de windows instalado en *todos los equipos* donde se vaya a realizar la prueba y que dichos usuarios *estén dentro* del canal #usuarios.\n\n Cuando desee comenzar la prueba *pulse el botón comenzar*.\n\n"
+                }
+            },
+            {
+                "type": "divider"
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": ":heavy_check_mark:  La prueba se ha realizado correctamente.",
+                        "value": "final_test"
+                    }
+                ]
+
+            }
+        ]
+    )
+
+
+def send_file(file):  # Sends file with test's results
+    return client.files_upload(
+        token=values["slack_token"],
+        channels=values['channel_gestores'],
+        file=file,
+        filetype="json",
+        initial_comment="Ese es el fichero que contiene el resultado de la prueba:"
+    )
+
+
 @app.route("/slack/actions", methods=["POST"])
 def message_actions():
     form_json = json.loads(request.form["payload"])
@@ -227,12 +269,13 @@ def message_actions():
         if value == "start_test":  # An admin has started the test.
             admin = form_json['user']['username']
             print('[Slack API] ' + admin + ' has started the test.')
-            ts = form_json['container']['message_ts']
-            global uid
+            global uid, ts_admin
+            ts_admin = form_json['container']['message_ts']
             uid = datetime.datetime.now().strftime('%Y%m%d%H%M')
             api.start_test(uid)
-            send_state_waiting(ts)
+            send_state_waiting(ts_admin)
             send_invite_users()
+            # TODO: keep checking every 5 seconds if the test has finished and send message.
         elif value == "subscribe_test":
             tg = form_json['trigger_id']
             open_modal_for(tg)

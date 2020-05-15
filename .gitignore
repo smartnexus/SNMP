@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 prueba_celia.py
 SNMPTrapReceiver.py
+data.json
+exports/
