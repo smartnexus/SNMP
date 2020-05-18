@@ -8,6 +8,7 @@ import json
 integer = 0
 string = 1
 running = False
+waiting = False
 
 test_id = ''
 thr = {}
@@ -16,8 +17,9 @@ users = []
 
 
 def start_test(number):
-    global test_id
+    global test_id, waiting
     test_id = number
+    waiting = True
 
 
 def export(data, file):
@@ -50,7 +52,7 @@ def load_config():
 
 
 def add_agent(ip, slack_user):
-    if not any(user['slack'] == slack_user for user in users) and not running:  # Prevents duplicated slack users in list
+    if not any(user['slack'] == slack_user for user in users) and waiting:  # Prevents duplicated slack users in list
         user = {
             "id": uuid.uuid4().hex,
             "ip": ip,

@@ -4,10 +4,10 @@ import api
 import json
 import logging
 import datetime
+import time
 
 uid = ''
 values = {}
-ts_admin = ''
 client = WebClient()
 app = Flask(__name__)
 
@@ -152,19 +152,19 @@ def open_modal_for(trigger_id):
                     "type": "section",
                     "text": {
                         "type": "plain_text",
-                        "text": "1.Abra la consola de Window(aplciación cmd)"
+                        "text": "1. Abra la consola de Windows (aplicación cmd)"
                     }
                 },
                 {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "2. Introduzca el comando ipconfig y busque la parte del texto donde pone Adaptador de Lan."
+                        "text": "2. Introduzca el comando ipconfig y busque la parte del texto donde figura Adaptador de Ethernet 'VPN'."
                     }
                 },
                 {
                     "type": "image",
-                    "image_url": "https://www.groovypost.com/wp-content/uploads/2015/10/ipconfig.png",
+                    "image_url": "https://i.imgur.com/KWfKF7t.png",
                     "alt_text": "image1"
                 }
             ]
@@ -233,8 +233,7 @@ def send_state_final(ts):
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": ":heavy_check_mark:  La prueba se ha realizado correctamente.",
-                        "value": "final_test"
+                        "text": ":heavy_check_mark:  La prueba se ha realizado correctamente."
                     }
                 ]
 
@@ -248,8 +247,9 @@ def send_file(file):  # Sends file with test's results
         token=values["slack_token"],
         channels=values['channel_gestores'],
         file=file,
+        filename='test_results.json',
         filetype="json",
-        initial_comment="Ese es el fichero que contiene el resultado de la prueba:"
+        initial_comment="*Fichero con los resultados de la prueba:*"
     )
 
 
@@ -269,13 +269,15 @@ def message_actions():
         if value == "start_test":  # An admin has started the test.
             admin = form_json['user']['username']
             print('[Slack API] ' + admin + ' has started the test.')
-            global uid, ts_admin
-            ts_admin = form_json['container']['message_ts']
+            global uid
+            ts = form_json['container']['message_ts']
             uid = datetime.datetime.now().strftime('%Y%m%d%H%M')
             api.start_test(uid)
-            send_state_waiting(ts_admin)
+            send_state_waiting(ts)
             send_invite_users()
-            # TODO: keep checking every 5 seconds if the test has finished and send message.
+            while api.running or api.waiting:
+                time.sleep(5)
+            send_state_final(ts)
         elif value == "subscribe_test":
             tg = form_json['trigger_id']
             open_modal_for(tg)

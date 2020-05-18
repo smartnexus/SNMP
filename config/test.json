@@ -1,7 +1,7 @@
 {
   "port": 161,
   "port_trap": 162,
-  "test_time": 20,
+  "test_time": 15,
   "sample_time": 5,
   "min_users": 1
 }

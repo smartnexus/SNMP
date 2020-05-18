@@ -6,6 +6,7 @@ api.trap_server_init()
 api.slack_server_init()
 while len(api.users) < test['min_users']:
     time.sleep(5)
+api.waiting = False
 api.running = True
 print('[Main] Starting the test... (UID: ' + api.test_id + ')')
 for user in api.users:
@@ -76,9 +77,9 @@ while count < test['test_time']:
         variable_data = api.get_variable_data(ip)
         if api.trap_check(ip):
             # TODO: Configurar bien para que se guarde y notifique solo una vez.
+            print('[DISCARD] Trap received from ' + domain)
             discard = True
             if any(key == domain for key in trap):
-                print('[DISCARD] Trap received from ' + domain)
                 user["discard"].append({"trap_received": True})
                 trap.append(domain)
 
@@ -89,3 +90,4 @@ while count < test['test_time']:
 
 api.export(api.users, 'results.json')
 api.to_slack()
+api.running = False
