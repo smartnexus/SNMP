@@ -14,6 +14,7 @@ test_id = ''
 thr = {}
 test = {}
 users = []
+trap_list_append = []
 
 
 def start_test(number):
@@ -62,7 +63,7 @@ def add_agent(ip, slack_user):
         set_scalar(ip, test['port'], rfc1213_mib.get('system').get('sysName'), user['id'])
         set_scalar(ip, test['port'], rfc1213_mib.get('system').get('sysContact'), user['slack'])
         users.append(user)
-    return not running
+    return waiting
 
 
 def get_discard(ip):
@@ -72,7 +73,8 @@ def get_discard(ip):
     run_sw = get_table_items(ip, test['port'], host_mib.get('hrSWRun').get('hrSWRunName'), string)
     percent_os_cpu = round(os_cpu_perf / 24000000, 2)
 
-    return percent_os_cpu, any(installed.startswith('MATLAB') for installed in installed_sw), any(elem in run_sw for elem in thr['discard_sw'])
+    return percent_os_cpu, any(installed.startswith('MATLAB') for installed in installed_sw), any(
+        elem in run_sw for elem in thr['discard_sw'])
 
 
 def get_data(ip):
@@ -85,7 +87,8 @@ def get_data(ip):
             storage_ind = storage_type.index(t)
     all_units = (get_table_items(ip, test['port'], host_mib.get('hrStorage').get('hrStorageAllocationUnits'), integer))[
         storage_ind]
-    used_units = (get_table_items(ip, test['port'], host_mib.get('hrStorage').get('hrStorageUsed'), integer))[storage_ind]
+    used_units = (get_table_items(ip, test['port'], host_mib.get('hrStorage').get('hrStorageUsed'), integer))[
+        storage_ind]
     used_ram = all_units * used_units
 
     return cpu_cores, installed_ram, used_ram
@@ -96,7 +99,8 @@ def get_static_data(ip):
     descr = get_scalar(ip, test['port'], rfc1213_mib.get('system').get('sysDescr'),
                        string).replace('Hardware: ', '').replace('Software: ', '').split(' - ')
     result = {
-        'date': get_scalar(ip, test['port'], host_mib.get('hrSystem').get('hrSystemDate'), string),  # TODO: decode received str
+        'date': get_scalar(ip, test['port'], host_mib.get('hrSystem').get('hrSystemDate'), string),
+        # TODO: decode received str
         'hardware': descr[0],
         'os_version': descr[1],
         'uptime': get_scalar(ip, test['port'], rfc1213_mib.get('system').get('sysUpTime'), integer),
@@ -117,8 +121,9 @@ def get_variable_data(ip):
 
 def trap_check(ip):
     check = False
-    if ip in trap_list:
+    if ip in trap_list and ip not in trap_list_append:
         check = True
+        trap_list_append.append(ip)
     return check
 
 

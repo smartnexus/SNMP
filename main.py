@@ -69,19 +69,14 @@ for user in api.users:
 
 print('[Main] Gathering device use each ' + str(test['sample_time']) + ' secs...')
 count = 0
-trap = []
 while count < test['test_time']:
     for user in api.users:
         ip = user['ip']
         domain = user['slack'] + '@' + user['ip']
         variable_data = api.get_variable_data(ip)
         if api.trap_check(ip):
-            # TODO: Configurar bien para que se guarde y notifique solo una vez.
             print('[DISCARD] Trap received from ' + domain)
-            discard = True
-            if any(key == domain for key in trap):
-                user["discard"].append({"trap_received": True})
-                trap.append(domain)
+            user["discard"].append({"trap_received": True})
 
         user["data"]["used_cpu"].append(variable_data["used_cpu"])
         user["data"]["used_ram"].append(variable_data["used_ram"])
