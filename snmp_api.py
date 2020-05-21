@@ -4,7 +4,7 @@ from pysnmp.carrier.asyncore.dgram import udp
 from pysnmp.entity.rfc3413 import ntfrcv
 import threading
 
-listening_ip = '127.0.0.1'
+listening_ip = '0.0.0.0'
 listening_port = 162
 trap_list = []
 

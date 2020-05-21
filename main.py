@@ -70,6 +70,7 @@ for user in api.users:
 print('[Main] Gathering device use each ' + str(test['sample_time']) + ' secs...')
 count = 0
 while count < test['test_time']:
+    print('[Main] Probing SNMP agents for variable data: step (' + str(round(count/test['sample_time'], 0)+1).split('.')[0] + '/' + str(round(test['test_time']/test['sample_time'], 0)).split('.')[0] + ')')
     for user in api.users:
         ip = user['ip']
         domain = user['slack'] + '@' + user['ip']
